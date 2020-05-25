@@ -1,224 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta
-	name="viewport"
-	content="width=device-width,initial-scale=1,maximum-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
 <title>WebRTC Video Conferencing Application</title>
 </head>
 <body>
+	<!-- Title & header of demo aplication. -->
 	<div>
-		<img
-			style="width: auto; height: 50px"
-			src="https://itsallbinary.com/wp-content/uploads/2017/03/final_itsallbinary.gif" /> <br /> <strong>WebRTC Video Conferencing Application Demo</strong>
-	</div>
-	<!-- Your camera video will show up here. -->
-	<div>
-		<br />
-		<h3>You</h3>
-		<br />
-		<video
-			style="width: 40%; height: auto;"
-			id="localVideo"
-			poster="https://img.icons8.com/fluent/48/000000/person-male.png"
-			autoplay
-			muted></video>
+		<img style="float: left; width: auto; height: 50px"
+			src="https://itsallbinary.com/wp-content/uploads/2017/03/final_itsallbinary.gif" />
+		<h3 style="position: relative; left: 10px;">WebRTC Video Conferencing <br />Application Demo
+		</h3>
 	</div>
 
 	<!-- Other person's camera video will show up here -->
 	<div>
-		<br />
-		<h3>Other Person</h3>
-		<br />
-		<video
-			style="width: 40%; height: auto;"
-			id="remoteVideo"
-			poster="https://img.icons8.com/fluent/48/000000/person-male.png"
-			autoplay></video>
+		<h3 style="margin: 5px">Other Person</h3>
+		<video style="width: 50vh; height: 50vh;" id="remoteVideo"
+			poster="https://img.icons8.com/fluent/48/000000/person-male.png" autoplay></video>
+	</div>
+
+	<!-- Your camera video will show up here. -->
+	<div>
+		<h3 style="margin: 5px">You</h3>
+		<video style="width: auto; height: 20vh;" id="localVideo"
+			poster="https://img.icons8.com/fluent/48/000000/person-male.png" autoplay muted></video>
 	</div>
 
 	<!-- Button to leave video conference. -->
 	<div class="box">
-		<button id="hangupButton">Leave Video Conference</button>
+		<button id="leaveButton" style="background-color: #008CBA; color: white; ">Leave Video Conference</button>
 	</div>
 
-	<script>
-
-		/*
-		* Prepare websocket for signaling server endpoint.
-		*/
-		var websocket = new WebSocket("ws://" + window.location.host
-				+ "/video-conf-tutorial/signal");
-		
-		websocket.onopen = function() {
-		    console.log("Connected to signaling endpoint.");
-		    websocket.onmessage = function(msg) {
-				console.log("Got message", msg.data);
-				var signal = JSON.parse(msg.data);
-				//var data = content.data;
-				switch (signal.type) {
-				// when somebody wants to call us
-				case "offer":
-					handleOffer(signal);
-					break;
-				case "answer":
-					handleAnswer(signal);
-					break;
-				default:
-					break;
-				}
-			};
-			preparePeer();
-			connectToCamAndAudio(true);
-			
-		};
-
-		// Below code for WebRTC
-
-		var peerConnection;
-		var thispc;
-
-
-		const hangupButton = document.getElementById('hangupButton');		
-		hangupButton.addEventListener('click', hangup);
-	
-
-		let localStream;
-
-
-
-		async function connectToCamAndAudio(makeCall) {
-			console.log('Requesting local stream');
-			const localVideo = document.getElementById('localVideo');
-			try {
-				const stream = await navigator.mediaDevices.getUserMedia({
-					audio : true,
-					video : true
-				});
-				console.log('Received local stream');
-				localVideo.srcObject = stream;
-				localStream = stream;
-
-				// Create offer
-				createOffer();
-				
-				if(makeCall){
-				setTimeout(
-						function() {
-							call();
-						}, 2000);
-				}
-				
-				
-			} catch (e) {
-				alert(`getUserMedia() error: ${e.name}`);
-				throw e;
-			}
-			console.log('Start complete');
-		}
-
-		async function call() {
-
-			console.log('Starting call');
-			const videoTracks = localStream.getVideoTracks();
-			const audioTracks = localStream.getAudioTracks();
-			if (videoTracks.length > 0) {
-				console.log(`Using video device: ${videoTracks[0].label}`);
-			}
-			if (audioTracks.length > 0) {
-				console.log(`Using audio device: ${audioTracks[0].label}`);
-			}
-			
-			console.log('track gotRemoteStream');
-			localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-			console.log('localStream tracks added');
-
-		}
-
-		function hangup() {
-			console.log('Ending call');
-			peerConnection.close();
-			thispc.close();
-			websocket.close();
-			window.location.href = './index.html';
-		}
-		
-		function gotRemoteStream(e) {
-			console.log('gotRemoteStream');
-			const remoteVideo = document.getElementById('remoteVideo');
-			  if (remoteVideo.srcObject !== e.streams[0]) {
-			    remoteVideo.srcObject = e.streams[0];
-			    console.log('pc2 received remote stream');
-			  }
-			}
-
-		// Signaling & offer
-
-		function preparePeer() {
-			/*
-			 * Using google STUN server. Free servers list https://gist.github.com/zziuni/3741933
-			 */
-			const configuration = {
-				iceServers : [ {
-					urls : 'stun:stun.l.google.com:19302'
-				} ]
-			};
-
-		// Prepare peer connection object
-			peerConnection = new RTCPeerConnection(configuration);
-			peerConnection.onnegotiationneeded = async () => {
-				console.log('onnegotiationneeded');
-				connectToCamAndAudio();
-			};
-			peerConnection.addEventListener('track', gotRemoteStream);
-			
-			thispc = new RTCPeerConnection(configuration);
-			thispc.onicecandidate = function(event) {
-				console.log('onicecandidate');
-				if (event.candidate) {
-					await (peerConnection.addIceCandidate(event.candidate));
-				}
-			};
-			
-
-		}
-
-		function createOffer() {
-			peerConnection.createOffer(function(offer) {
-				sendSignal( offer);
-				peerConnection.setLocalDescription(offer);
-			}, function(error) {
-				alert("Error creating an offer");
-			});
-		}
-
-		function handleOffer(offer) {
-			peerConnection
-					.setRemoteDescription(new RTCSessionDescription(offer));
-
-			// create and send an answer to an offer
-			peerConnection.createAnswer(function(answer) {
-				peerConnection.setLocalDescription(answer);
-				sendSignal( answer);
-			}, function(error) {
-				alert("Error creating an answer");
-			});
-
-		};
-
-
-		function handleAnswer(answer) {
-			peerConnection.setRemoteDescription(new RTCSessionDescription(
-					answer));
-			console.log("connection established successfully!!");
-		};
-
-		function sendSignal(signal) {
-			if (websocket.readyState == 1) {
-				websocket.send(JSON.stringify(signal));
-			}
-		}
-	</script>
+	<script type="text/javascript" src="conf.js?reload=true"></script>
 
 </body>
 </html>
