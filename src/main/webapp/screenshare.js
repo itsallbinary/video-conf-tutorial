@@ -99,9 +99,9 @@ async function displayLocalStreamAndSignal(firstTime) {
     const localVideo = document.getElementById('localVideo');
     let localStream;
     try {
-        // Capture local video & audio stream & set to local <video> DOM
+        // Capture local display Screen & audio stream & set to local <video> DOM
         // element
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getDisplayMedia({
             audio: true,
             video: true
         });

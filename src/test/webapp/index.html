@@ -1,0 +1,93 @@
+<html>
+
+<head>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+/*var video = $("#live").get()[0];
+ 	var options = {
+		"video" : true
+	};
+
+	// use the chrome specific GetUserMedia function
+	navigator.webkitGetUserMedia(options, function(stream) {
+		video.src = webkitURL.createObjectURL(stream);
+	}, function(err) {
+		console.log("Unable to get video stream!")
+	}) */
+	
+	/* var video = document.querySelector("#videoElement"); */
+
+</script>
+
+</head>
+
+<body>
+
+	Welcome to video streaming
+
+	<div>
+		<!-- <video
+			id="live"
+			width="320"
+			height="240"
+			autoplay="autoplay"
+			style="display: inline;"></video> -->
+
+		<video
+			autoplay="autoplay"x
+			id="videoElement">
+
+		</video>
+
+		<script>
+		
+		var video = $("#videoElement").get()[0];
+		var webcamstream;
+
+		if (navigator.mediaDevices.getUserMedia) {
+		  navigator.mediaDevices.getUserMedia({ audio: true,video: true })
+		    .then(function (stream) {
+		      video.srcObject = stream;
+		      var medias = new MediaStreamRecorder(stream);
+              medias.ondataavailable = function(blob) {
+                   socket.emit("livevideo", blob);
+              };
+              medias.start();
+		    })
+		    .catch(function (err0r) {
+		      console.log("Something went wrong!" + err0r);
+		    });
+		}
+		
+		/* function startRecording() {
+	        streamRecorder = webcamstream.record();
+	        setTimeout(stopRecording, 100);
+	    }
+	    function stopRecording() {
+	        streamRecorder.getRecordedData(postVideoToServer);
+	    }
+	    function postVideoToServer(videoblob) {
+
+	        var data = {};
+	        data.video = videoblob;
+	        data.metadata = 'test metadata';
+	        data.action = "upload_video";
+	        jQuery.post("livevideo", data, onUploadSuccess);
+	    }
+	    function onUploadSuccess() {
+	        alert ('video uploaded');
+	    } */
+		</script>
+		
+		Click here to <a href="stop.html">stop</a>
+		
+		<!-- <div id="webcamcontrols">
+        <button class="recordbutton" onclick="startRecording();">RECORD</button>
+    </div> -->
+
+	</div>
+</body>
+
+</html>
